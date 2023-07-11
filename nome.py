@@ -1,30 +1,42 @@
-saldo = 0
+balance = 0
+
+def register_gain(amount):
+    global balance
+    balance += amount
+    return f"Ganho registrado! Agora você tem R${balance:.2f}"
+
+def register_expense(amount):
+    global balance
+    balance -= amount
+    return f"Gasto registrado! Agora você tem R${balance:.2f}"
+
+def get_balance():
+    global balance
+    return f"Saldo atual: R${balance:.2f}"
 
 while True:
-
-    print("Escolha uma dos números abaixo:")
+    print("Escolha uma das opções abaixo:")
     print("1 - Ganho")
     print("2 - Gasto")
     print("3 - Saldo")
     print("4 - Sair")
 
-    opcaoescolhida = input("Opção escolhida: ")
+    choice = input("Opção escolhida: ")
 
-
-    if opcaoescolhida == "1":
-        valor = float(input("Digite seu ganho: "))
-        saldo += valor
-        msg = (f"Ganho registrado! Agora você tem R${saldo:.2f}")
-    elif opcaoescolhida == "2":
-        valor = float(input("Digite seu gasto: "))
-        saldo -= valor
-        msg = (f"Gasto registrado! Agora você tem R${saldo:.2f}")
-    elif opcaoescolhida == "3":
-        msg = (f"Saldo atual: R${saldo:.2f}")
-    elif opcaoescolhida == "4":
-        msg = "Até mais!!!"
+    if choice == "1":
+        value = float(input("Digite seu ganho: "))
+        output = register_gain(value)
+    elif choice == "2":
+        value = float(input("Digite seu gasto: "))
+        output = register_expense(value)
+    elif choice == "3":
+        output = get_balance()
+    elif choice == "4":
+        output = "Até mais!!!"
         break
     else:
-        msg = "Opção inválida!"
-    print(msg)
-print(msg)
+        output = "Opção inválida!"
+
+    print(output)
+
+print(output)
