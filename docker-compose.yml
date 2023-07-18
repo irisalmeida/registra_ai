@@ -1,0 +1,8 @@
+version: '3.8'
+
+services:
+  # Rgistra_Ai web app service
+  web_app:
+    build: .
+    ports:
+      - "8001:8001"
