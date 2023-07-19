@@ -4,6 +4,12 @@ FROM python:3.9-alpine3.17 as base
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="${VIRTUAL_ENV}/bin:$PATH"
 
+RUN set -ex \
+    && apk update \
+    && apk upgrade \
+    # Install build dependencies
+    && apk add --no-cache --virtual build-dependencies make g++ postgresql-dev
+
 # Set the working directory inside the container
 WORKDIR /app
 

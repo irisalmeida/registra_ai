@@ -1,8 +1,22 @@
 version: '3.8'
 
 services:
-  # Rgistra_Ai web app service
+  # PostgreSQL service
+  postgres:
+    image: postgres:15.3-alpine
+    env_file:
+      - ./.env
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data:rw # Use data/postgres directory as volume
+    ports:
+      - 5432:5432
+
+  # Web app service
   web_app:
     build: .
+    depends_on:
+      - postgres
+    env_file:
+      - ./.env
     ports:
       - "8001:8001"
