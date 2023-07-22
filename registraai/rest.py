@@ -1,6 +1,7 @@
-from flask import Flask, jsonify, request, make_response, abort
+from flask import Flask, g, jsonify, request, make_response, abort
 
 import controller
+import db
 
 app = Flask(__name__)
 
@@ -79,3 +80,16 @@ def post_expense():
         "balance": balance
     }
     return jsonify(res), 200
+
+
+@app.before_request
+def before_request():
+    # Initialize the connection pool before each request
+    db.init_pool()
+
+
+@app.teardown_appcontext
+def teardown_appcontext(exception):
+    # Release the connection pool after each request
+    if "connection_pool" in g:
+        g.connection_pool.closeall()

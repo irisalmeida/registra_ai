@@ -1,66 +1,85 @@
+import time
 import os
+from typing import List, Optional, Tuple
 
+from flask import g
 import psycopg2
+from psycopg2 import pool
 from dotenv import load_dotenv
+
+from rest import app
 
 load_dotenv()
 
+db_config = {
+    "minconn": 1,
+    "maxconn": 10,
+    "dbname": os.getenv("POSTGRES_DB"),
+    "user": os.getenv("POSTGRES_USER"),
+    "password": os.getenv("POSTGRES_PASSWORD"),
+    "host": os.getenv("POSTGRES_HOST")
+}
 
-def init_db():
-    connect()
-    create_tables()
+
+def load_query(name: str) -> str:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(current_dir, "sql", name)
+
+    with open(file_path, 'r') as file:
+        query = file.read()
+    return query
 
 
-def connect():
-    """Establishes a connection to the PostgreSQL database."""
-    host = os.getenv("POSTGRES_HOST")
-    database = os.getenv("POSTGRES_DB")
-    user = os.getenv("POSTGRES_USER")
-    password = os.getenv("POSTGRES_PASSWORD")
+def execute_query(query: str, values: Tuple = ()) -> Optional[List[Tuple]]:
+    conn = g.connection_pool.getconn()
+    cursor = conn.cursor()
+    result = None
 
     try:
-        connection = psycopg2.connect(
-            host=host,
-            database=database,
-            user=user,
-            password=password
-        )
-        print("Connection to the database successful.")
-        return connection
+        if values:
+            cursor.execute(query, values)
+        else:
+            cursor.execute(query)
+        conn.commit()
+        if cursor.description:
+            result = cursor.fetchall()
+    finally:
+        cursor.close()
+        g.connection_pool.putconn(conn)
 
-    except psycopg2.Error as e:
-        print("Error connecting to PostgreSQL:", e)
-        raise e
+    return result
+
+
+def init_db():
+    with app.app_context():
+        init_pool()
+        create_tables()
+
+
+def init_pool():
+    if 'connection_pool' not in g:
+        max_attempts = 3
+        attempts = 0
+        connection_pool = None
+
+        while attempts < max_attempts:
+            try:
+                connection_pool = pool.SimpleConnectionPool(**db_config)
+                break
+            except psycopg2.OperationalError:
+                attempts += 1
+                wait_time = attempts  # Increase the wait time with each attempt
+                print(f"Attempt {attempts}/{max_attempts}: Database not ready, waiting {wait_time} seconds...")
+                time.sleep(wait_time)
+
+        if connection_pool is None:
+            raise RuntimeError("Failed to connect to the database after multiple attempts.")
+
+        g.connection_pool = connection_pool
 
 
 def create_tables():
-    """Reads and executes the SQL commands to create tables."""
-    connection = connect()
-    if connection is None:
-        return
+    create_table_records_query = "create_table_records.sql"
+    query = load_query(create_table_records_query)
 
-    tables = {
-        "records": "create_table_records.sql"
-    }
-
-    try:
-        with connection.cursor() as cursor:
-            for table_name, file_name in tables.items():
-                # Get the path to the current script's directory
-                script_dir = os.path.dirname(__file__)
-                # Construct the path to the SQL file inside the 'sql' subdirectory
-                sql_file_path = os.path.join(script_dir, "sql", file_name)
-
-                # Read SQL commands from the file and execute them
-                with open(sql_file_path, "r") as sql_file:
-                    create_table_sql = sql_file.read()
-
-                cursor.execute(create_table_sql)
-                connection.commit()
-                print(f"Table '{table_name}' created successfully.")
-
-    except (psycopg2.Error, FileNotFoundError) as e:
-        print("Error creating tables:", e)
-
-    finally:
-        connection.close()
+    execute_query(query)
