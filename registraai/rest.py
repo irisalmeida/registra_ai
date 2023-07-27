@@ -81,6 +81,10 @@ def post_expense():
     }
     return jsonify(res), 200
 
+@app.route("history")
+def get_history():
+    all_records = controller.get_all()
+    return jsonify(all_records)
 
 @app.before_request
 def before_request():
