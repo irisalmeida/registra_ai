@@ -7,8 +7,6 @@ import psycopg2
 from psycopg2 import pool
 from dotenv import load_dotenv
 
-from rest import app
-
 load_dotenv()
 
 db_config = {
@@ -50,7 +48,7 @@ def execute_query(query: str, values: Tuple = ()) -> Optional[List[Tuple]]:
     return result
 
 
-def init_db():
+def init_db(app):
     with app.app_context():
         init_pool()
         create_tables()
