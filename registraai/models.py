@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional
 from db import load_query, execute_query
 
+
 class Record():
     def __init__(self, amount:float, description:str, ts:Optional[datetime]=None) -> None:
         self.amount = amount
@@ -12,30 +13,22 @@ class Record():
         rec = vars(self).copy()
         return rec
 
-
     def save(self):
-        create_record_query = "registraai/sql/create_table_records.sql"
+        create_record_query = "create_table_records.sql"
         query = load_query(create_record_query)
 
-        query = query.replace("@MyCounter", str(self.amount))
-        query = query.replace("@MyDescription", self.description)
-        query = query.replace("@MyTimestamp", str(self.ts))
-
-       
-        execute_query(query)
-
+        values = (self.amount, self.description, self.ts)
 
         try:
             execute_query(query)
-            return True 
+            return True
         except Exception as e:
+            print(e)
             return False
-
-
+            
+    @staticmethod
     def get_all():
-        
-       
-        query = load_query("caminho/do/arquivo/select_all_records.sql")  # 
+        query = load_query("select_all_records.sql") 
         result = execute_query(query)
 
         all_records = []

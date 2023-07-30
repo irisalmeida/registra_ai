@@ -23,5 +23,5 @@ def register_expense(amount:float, description:str) -> dict:
     rec.save()
     return rec.to_dict()
 
-def get_all(self):
+def get_all_records(self):
     return Record.get_all()
