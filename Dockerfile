@@ -26,6 +26,7 @@ COPY ./registraai /app/registraai/
 
 # Set the PYTHONPATH to include the /app directory
 ENV PYTHONPATH="${PYTHONPATH}:/app/registraai"
+ENV PYTHONUNBUFFERED=1
 
 # Specify the command to run when the container starts
 CMD ["python", "registraai"]
