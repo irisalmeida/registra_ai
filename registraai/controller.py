@@ -7,7 +7,7 @@ def get_all_records():
 
 def get_balance():
     """Returns the total balance after all registered gains and expenses"""
-    all_records = get_all_records()  # Chamando a função para obter a lista de registros
+    all_records = get_all_records() 
     balance = sum([rec['amount'] for rec in all_records])
     return balance
 
