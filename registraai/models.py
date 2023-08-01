@@ -31,6 +31,7 @@ class Record():
         query = load_query("select_all_records.sql") 
         result = execute_query(query)
 
+
         all_records = []
         for row in result:
             amount, description, ts = row

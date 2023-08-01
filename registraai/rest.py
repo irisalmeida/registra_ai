@@ -2,6 +2,7 @@ from flask import Flask, g, jsonify, request, make_response, abort
 
 import controller
 import db
+from registraai.models import Record
 
 app = Flask(__name__)
 

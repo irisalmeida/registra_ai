@@ -1,13 +1,15 @@
 from models import Record
 
-records = []
 
+def get_all_records():
+    all_records =  Record.get_all()
+    return all_records
 
 def get_balance():
     """Returns the total balance after all registered gains and expenses"""
-    balance = sum([rec.amount for rec in records])
+    all_records = get_all_records()  # Chamando a função para obter a lista de registros
+    balance = sum([rec['amount'] for rec in all_records])
     return balance
-
 
 def register_gain(amount:float, description:str) -> dict:
     """Register a money gain. The value is stored as a positive value."""
@@ -23,5 +25,3 @@ def register_expense(amount:float, description:str) -> dict:
     rec.save()
     return rec.to_dict()
 
-def get_all_records(self):
-    return Record.get_all()
