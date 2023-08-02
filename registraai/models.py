@@ -14,13 +14,13 @@ class Record():
         return rec
 
     def save(self):
-        create_record_query = "create_table_records.sql"
-        query = load_query(create_record_query)
+        insert_record_query = "insert_table_records.sql"
+        query = load_query(insert_record_query)
 
         values = (self.amount, self.description, self.ts)
 
         try:
-            execute_query(query)
+            execute_query(query, values)
             return True
         except Exception as e:
             print(e)
@@ -31,10 +31,9 @@ class Record():
         query = load_query("select_all_records.sql") 
         result = execute_query(query)
 
-
         all_records = []
         for row in result:
-            amount, description, ts = row
+            id, amount, description, ts = row
             record = Record(amount, description, ts)
             all_records.append(record.to_dict())
 
