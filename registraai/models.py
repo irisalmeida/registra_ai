@@ -25,10 +25,10 @@ class Record():
         except Exception as e:
             print(e)
             return False
-            
+
     @staticmethod
     def get_all():
-        query = load_query("select_all_records.sql") 
+        query = load_query("select_all_records.sql")
         result = execute_query(query)
 
         all_records = []
