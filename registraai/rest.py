@@ -2,6 +2,7 @@ from flask import Flask, g, jsonify, request, make_response, abort
 
 import controller
 import db
+from registraai.models import Record
 
 app = Flask(__name__)
 
@@ -22,7 +23,6 @@ def _abort(status_code, message):
 
 @app.route("/balance")
 def get_balance():
-    global balance
     balance = controller.get_balance()
 
     res = {
@@ -34,8 +34,6 @@ def get_balance():
 
 @app.route("/gain", methods=["POST"])
 def post_gain():
-    global balance
-
     data = request.get_json()
 
     _assert(data is not None, 400, "Faltou o body da requisição")
@@ -59,7 +57,6 @@ def post_gain():
 
 @app.route("/expense", methods=["POST"])
 def post_expense():
-    global balance
 
     data = request.get_json()
 
@@ -80,6 +77,12 @@ def post_expense():
         "balance": balance
     }
     return jsonify(res), 200
+
+
+@app.route("/history", methods=["GET"])
+def get_history():
+    all_records = controller.get_all_records()
+    return jsonify(all_records)
 
 
 @app.before_request
