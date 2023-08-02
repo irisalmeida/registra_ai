@@ -11,10 +11,6 @@
   organização de finanças.
 </p>
 
-## 📄 Estrutura do repositório
-
-- 
-- 
 
 ## ➕ Contexto
 
@@ -26,8 +22,10 @@ atualizado.
 
 ## 🚀 Tecnologias 
 
-- 
-- 
+- Python (>=3.8.5)
+- [Flask](https://flask.palletsprojects.com/en/2.3.x/)
+- [PostgreSQL](https://www.postgresql.org/)
+- [Docker](https://www.docker.com/)
 
 ## ⚙️  Como rodar
 
