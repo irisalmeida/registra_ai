@@ -22,7 +22,7 @@ atualizado.
 
 ## 🚀 Tecnologias 
 
-- Python (>=3.9.0)
+- Python (>=3.10.0)
 - [Flask](https://flask.palletsprojects.com/en/2.3.x/)
 - [PostgreSQL](https://www.postgresql.org/)
 - [Docker](https://www.docker.com/)

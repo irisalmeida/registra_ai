@@ -43,7 +43,7 @@ def get_balance() -> float:
     """
     all_records = get_all_records()
     balance = sum([float(rec['amount']) for rec in all_records])
-    return balance
+    return round(balance, 2)
 
 
 def register_gain(amount:float, description:str) -> dict:
