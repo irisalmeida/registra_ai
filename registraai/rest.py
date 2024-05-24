@@ -1,3 +1,4 @@
+from typing import Any
 from flask import Flask, g, jsonify, request, make_response, abort, Response
 
 import controller
@@ -5,55 +6,104 @@ import db
 
 app = Flask(__name__)
 
-
-def _assert(condition:bool, status_code:int, message:str) -> None:
+def _assert(
+        condition: bool,
+        status_code: int,
+        reason: str,
+        additional_info: dict[str, Any] | None = None
+    ) -> None:
     """
-    Check if condition is true. If it is not, abort request and make an Error
-    response with the provided status code and message.
+    Check if condition is true. If it is not, abort request and make an error
+    response with the provided status code, message, and additional
+    information.
 
     Args:
-        condition: the condition that if is false will cause the request to
-          abort and receive a error response.
-        status_code: the response's status code if the condition is false.
-        message: the response's message if the condition is false.
+        condition (bool): The condition that, if false, will cause the request
+            to abort and receive an error response.
+        status_code (int): The response's status code if the condition is
+            false.
+        message (str): The response's message if the condition is false.
+        additional_info (dict[str, Any] | None, optional): Additional
+            information to include in the error response if the condition is
+            false. Default is None.
 
     Returns:
-        This function have no return, but the error response will have the
-        status code defined in the param and a json with 'status_code' and
-        'message' fields. Example:
+        This function does not return, but the error response will have the
+        status code defined in the param and a JSON with 'status', 'reason',
+        and optionally 'additional_info' fields. Example:
 
+    Response JSON Structure:
         {
-            "message": "Error during operation.",
-            "status_code": "400"
+            "status": str                # Status text. In this case, "error"
+            "reason": str                # The reason the request failed
+            "additional_info": dict {    # Additional information about the
+                ...                      # error reason
+            }
+        }
+
+    Example error response:
+        http/1.1 400 bad request
+        content-type: application/json
+        {
+            "status": "error",
+            "reason": "missing body fields",
+            "additional_info": {
+                "missing_fields": ["amount", "description"]
+            }
         }
     """
-    if condition: return
-    _abort(status_code, message)
+    if condition:
+        return
+    _abort(status_code, reason, additional_info)
 
 
-def _abort(status_code, message):
+def _abort(
+        status_code: int,
+        reason: str,
+        aditional_info: dict[str, Any] | None = None
+    ) -> None:
     """
-    Abort request and make an Error response with the provided status code and
-    message.
+    Abort request and make an error response with the provided status code,
+    reason, and additional information.
 
     Args:
-        status_code: the response's status code.
-        message: the response's message.
+        status_code (int): The response's status code.
+        reason (str): The response's reason message.
+        additional_info (dict[str, Any] | None, optional): Additional
+            information to include in the response. Default is None.
 
     Returns:
-        This function have no return, but the error response will have the
-        status code defined in the param and a json with 'status_code' and
-        'message' fields. Example:
+        This function does not return, but the error response will have the
+        status code defined in the param and a JSON with 'status', 'reason',
+        and optionally 'additional_info' fields. Example:
 
+    Response JSON Structure:
         {
-            "message": "Error during operation.",
-            "status_code": "400"
+            "status": str                # Status text. In this case, "error"
+            "reason": str                # The reason the request failed
+            "additional_info": dict {    # Additional information about the
+                ...                      # error reason
+            }
+        }
+
+    Example error response:
+        http/1.1 400 bad request
+        content-type: application/json
+        {
+            "status": "error",
+            "reason": "missing body fields",
+            "additional_info": {
+                "missing_fields": ["amount", "description"]
+            }
         }
     """
-    res = {
-        "message": message,
-        "status_code": status_code
+    res:dict[str,str|dict[str,Any]] = {
+        "status": "error",
+        "reason": reason,
     }
+    if aditional_info is not None:
+        res["aditional_info"] = aditional_info
+
     response = make_response(jsonify(res), status_code)
     abort(response)
 
@@ -73,30 +123,27 @@ def get_balance() -> tuple[Response,int]:
 
     Response JSON Structure:
         {
-            "balance": float,   # The current balance amount
-            "message": str,     # A message containing the current balance
+            "balance": float   # The current balance amount
         }
 
     Example Response:
         HTTP/1.1 200 OK
         Content-Type: application/json
         {
-            "balance": 100.50,
-            "message": "Saldo atual: R$100.50"
+            "balance": 100.50
         }
 
     """
     balance = controller.get_balance()
 
     res = {
-        "message": f"Saldo atual: R${balance:.2f}",
         "balance": balance,
     }
     return jsonify(res), 200
 
 
 @app.route("/gain", methods=["POST"])
-def post_gain() -> tuple[Response,int]:
+def post_gain() -> tuple[Response, int]:
     """
     Process and record a gain.
 
@@ -116,56 +163,96 @@ def post_gain() -> tuple[Response,int]:
 
     Response JSON Structure (200):
         {
-            "message": str,            # A message of success with the new
-                                       # balance
-            "registered_gain": dict,   # A dictionary with the fields "amount"
-                                       # and "description" from the gain record
-            "balance": float           # The new balance after the registered
-                                       # gain
+            "record": dict,    # A dictionary with the registered record
+            "balance": float   # The new balance after the registered record
         }
 
     Error Response JSON Structure (400):
         {
-            "message": str,       # A message with the error reason
-            "status_code": int    # The status code of the response
+            "status": str          # An error status
+            "reason": str          # The reason of the error
+            "additional_info": {   # Aditional information about the error
+                ...
+            }
+        }
+        {
+            "status": str          # An error status
+            "reason": str          # The reason of the error
         }
 
     Example Success Response:
         HTTP/1.1 200 OK
         Content-Type: application/json
         {
-            "message": "Ganho registrado! Agora você tem R$100.50"
-            "registered_gain": {
+            "record": {
                 "amount": 100.50,
                 "description": "Found in my old pants"
             },
             "balance": 100.50
         }
 
-    Example Error Response:
-        HTTP/1.1 400 Bad Request
-        Content-Type: application/json
+    example error response:
+        http/1.1 400 bad request
+        content-type: application/json
         {
-            "status_code": 400,
-            "message": "Body sem campo 'amount'"
+            "status": "error",
+            "reason": "missing body fields",
+            "additional_info": {
+                "missing_fields": ["amount", "description"]
+            }
         }
     """
-    data = request.get_json()
+    try:
+        data = request.get_json()
+    except Exception:
+        data = {}
 
-    _assert(data is not None, 400, "Faltou o body da requisição")
-    _assert("amount" in data, 400, "Body sem campo 'amount'")
-    _assert("description" in data, 400, "Body sem campo 'description'")
+    required_fields = ["amount", "description"]
+    missing_fields = []
 
-    amount = data.get("amount")
-    _assert(amount >= 0, 400, f"'amount' inválido: deve ser um valor positivo")
-    description = data.get("description")
+    _assert(data is not None, 400, "Missing request body")
+
+    for field in required_fields:
+        if field not in data:
+            missing_fields.append(field)
+
+    _assert(not bool(missing_fields), 400, "Missing body fields", {
+        "missing_fields": missing_fields })
+
+    amount: int | float = data.get("amount") # type: ignore
+
+    aditional_info = {
+        "invalid_field": "amount",
+        "reason": f"Must be a number. Got: {type(amount).__name__}"
+    }
+    _assert(isinstance(amount, int) or isinstance(amount, float),
+            400, "Invalid field", aditional_info)
+
+    aditional_info = {
+        "invalid_field": "amount",
+        "reason": f"Must be a positive number. Got: {amount}"
+    }
+    _assert(amount >= 0, 400, "Invalid field", aditional_info)
+
+    description: str = data.get("description") # type: ignore
+
+    aditional_info = {
+        "invalid_field": "description",
+        "reason": f"Must be a string. Got: {type(description).__name__}"
+    }
+    _assert(isinstance(description, str), 400, "Invalid field", aditional_info)
+
+    aditional_info = {
+        "invalid_field": "description",
+        "reason": f"Can't be empty"
+    }
+    _assert(bool(description), 400, "Invalid field", aditional_info)
 
     rec = controller.register_gain(amount, description)
     balance = controller.get_balance()
 
     res = {
-        "message": f"Ganho registrado! Agora você tem R${balance}",
-        "registered_gain": rec,
+        "record": rec,
         "balance": balance
     }
     return jsonify(res), 200
@@ -186,63 +273,102 @@ def post_expense():
 
     Request JSON Structure:
         {
-            "amount": float,     # The amount of the gain
-            "description": str   # A description of the gain
+            "amount": float,     # The amount of the expense
+            "description": str   # A description of the expense
         }
 
     Response JSON Structure (200):
         {
-            "message": str,               # A message of success with the new
-                                          # balance
-            "registered_expense": dict,   # A dictionary with the fields
-                                          # "amount" and "description" from the
-                                          # expense record
-            "balance": float              # The new balance after the registered
-                                          # expense
+            "record": dict,    # A dictionary with the registered record
+            "balance": float   # The new balance after the registered record
         }
 
     Error Response JSON Structure (400):
         {
-            "message": str,       # A message with the error reason
-            "status_code": int    # The status code of the response
+            "status": str          # An error status
+            "reason": str          # The reason of the error
+            "additional_info": {   # Aditional information about the error
+                ...
+            }
+        }
+        {
+            "status": str          # An error status
+            "reason": str          # The reason of the error
         }
 
     Example Success Response:
         HTTP/1.1 200 OK
         Content-Type: application/json
         {
-            "message": "Gasto registrado! Agora você tem R$50.50"
-            "registered_expense": {
-                "amount": 50.00
+            "record": {
+                "amount": -50.25,
                 "description": "Buy new pants"
             },
-            "balance": 50.50
+            "balance": 50.25
         }
 
     Example Error Response:
         HTTP/1.1 400 Bad Request
         Content-Type: application/json
         {
-            "status_code": 400,
-            "message": "Body sem campo 'amount'"
+            "status": "error",
+            "reason": "Missing body fields",
+            "additional_info": {
+                "missing_fields": ["amount", "description"]
+            }
         }
     """
-    data = request.get_json()
+    try:
+        data = request.get_json()
+    except Exception:
+        data = {}
 
-    _assert(data is not None, 400, "Faltou o body da requisição")
-    _assert("amount" in data, 400, "Body sem campo 'amount'")
-    _assert("description" in data, 400, "Body sem campo 'description'")
+    required_fields = ["amount", "description"]
+    missing_fields = []
 
-    amount = data.get("amount")
-    _assert(amount >= 0, 400, f"'amount' inválido: deve ser um valor positivo")
-    description = data.get("description")
+    _assert(data is not None, 400, "Missing request body")
+
+    for field in required_fields:
+        if field not in data:
+            missing_fields.append(field)
+
+    _assert(not bool(missing_fields), 400, "Missing body fields", {
+        "missing_fields": missing_fields })
+
+    amount: int | float = data.get("amount") # type: ignore
+
+    aditional_info = {
+        "invalid_field": "amount",
+        "reason": f"Must be a number. Got: {type(amount).__name__}"
+    }
+    _assert(isinstance(amount, int) or isinstance(amount, float),
+            400, "Invalid field", aditional_info)
+
+    aditional_info = {
+        "invalid_field": "amount",
+        "reason": f"Must be a positive number. Got: {amount}"
+    }
+    _assert(amount >= 0, 400, "Invalid field", aditional_info)
+
+    description: str = data.get("description") # type: ignore
+
+    aditional_info = {
+        "invalid_field": "description",
+        "reason": f"Must be a string. Got: {type(description).__name__}"
+    }
+    _assert(isinstance(description, str), 400, "Invalid field", aditional_info)
+
+    aditional_info = {
+        "invalid_field": "description",
+        "reason": f"Can't be empty"
+    }
+    _assert(bool(description), 400, "Invalid field", aditional_info)
 
     rec = controller.register_expense(amount, description)
     balance = controller.get_balance()
 
     res = {
-        "message": f"Gasto registrado! Agora você tem R${balance}",
-        "registered_expense": rec,
+        "record": rec,
         "balance": balance
     }
     return jsonify(res), 200
@@ -327,9 +453,10 @@ def before_request():
     """
     Initialize the database connection pool before each request.
 
-    This function is called before each request to initialize the connection pool,
-    ensuring that database connections are ready to be used by the request handlers.
-    It sets up necessary resources required for handling the request.
+    This function is called before each request to initialize the connection
+    pool, ensuring that database connections are ready to be used by the
+    request handlers. It sets up necessary resources required for handling the
+    request.
 
     Returns:
         None
@@ -342,13 +469,13 @@ def teardown_appcontext(exception):
     """
     Release the connection pool after each request.
 
-    This function is called after each request to release the database connection pool,
-    ensuring that all connections are properly closed and resources are cleaned up.
-    It helps maintain the stability and performance of the application by managing
-    the connection lifecycle.
+    This function is called after each request to release the database
+    connection pool, ensuring that all connections are properly closed and
+    resources are cleaned up. It helps maintain the stability and performance
+    of the application by managing the connection lifecycle.
 
-    Args:
-        exception (Exception): The exception that was raised during the request, if any.
+    Args: exception (Exception): The exception that was raised during the
+    request, if any.
 
     Returns:
         None

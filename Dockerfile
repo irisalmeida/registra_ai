@@ -1,5 +1,5 @@
 # Use the official Python image as the base image
-FROM python:3.9-alpine3.17 as base
+FROM python:3.10-alpine as base
 
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="${VIRTUAL_ENV}/bin:$PATH"
