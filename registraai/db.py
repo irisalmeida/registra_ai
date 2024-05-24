@@ -1,6 +1,5 @@
 import time
 import os
-from typing import List, Optional, Tuple
 
 from flask import g
 import psycopg2
@@ -20,6 +19,17 @@ db_config = {
 
 
 def load_query(name: str) -> str:
+    """
+    Load an SQL query from a file.
+
+    This function reads an SQL query from a file in the 'sql' directory based on the given name.
+
+    Args:
+        name (str): The name of the SQL query file (without the file extension).
+
+    Returns:
+        str: The contents of the SQL query as a string.
+    """
     current_dir = os.path.dirname(os.path.abspath(__file__))
     file_path = os.path.join(current_dir, "sql", name)
 
@@ -28,7 +38,20 @@ def load_query(name: str) -> str:
     return query
 
 
-def execute_query(query: str, values: Tuple = ()) -> Optional[List[Tuple]]:
+def execute_query(query:str, values:tuple = ()) -> None|list[tuple]:
+    """
+    Execute an SQL query with optional parameters.
+
+    This function executes the given SQL query with optional parameter values.
+
+    Args:
+        query (str): The SQL query to execute.
+        values (tuple, optional): The parameter values for the query (default: ()).
+
+    Returns:
+        None|list[tuple]: The result of the query, either a list of tuples or
+        None.
+    """
     conn = g.connection_pool.getconn()
     cursor = conn.cursor()
     result = None
@@ -49,12 +72,30 @@ def execute_query(query: str, values: Tuple = ()) -> Optional[List[Tuple]]:
 
 
 def init_db(app):
+    """
+    Initialize the database.
+
+    This function initializes the database by creating the connection pool and
+    creating tables.
+
+    Args:
+        app: The Flask application object.
+    """
     with app.app_context():
         init_pool()
         create_tables()
 
 
 def init_pool():
+    """
+    Initialize the connection pool.
+
+    This function initializes the connection pool for database connections.
+
+    Raises:
+        RuntimeError: If the connection to the database fails after multiple
+        attempts.
+    """
     if 'connection_pool' not in g:
         max_attempts = 3
         attempts = 0
@@ -77,6 +118,15 @@ def init_pool():
 
 
 def create_tables():
+    """
+    Create database tables.
+
+    This function creates the necessary tables in the database.
+
+    Note:
+        The SQL query for creating tables must be defined in a file named
+        'create_table_records.sql' and placed in the 'sql' directory.
+    """
     create_table_records_query = "create_table_records.sql"
     query = load_query(create_table_records_query)
 
