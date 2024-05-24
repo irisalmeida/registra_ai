@@ -4,7 +4,7 @@ REQUIREMENTS = requirements.txt
 MODULE := registraai
 
 run:
-	docker-compose up --build
+	docker compose up --build
 
 venv:
 	test -d $(VENV) || $(PYTHON) -m venv $(VENV)
