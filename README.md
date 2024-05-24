@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/irisalmeida/registra_ai/blob/main/Imagem.png" >
+  <img src="https://github.com/irisalmeida/registra_ai/blob/main/images/banner.png" >
 </p>
 
 <h2 align="center">
