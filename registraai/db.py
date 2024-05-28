@@ -56,6 +56,8 @@ def execute_query(query:str, values:tuple = ()) -> None|list[tuple]:
     cursor = conn.cursor()
     result = None
 
+    query = load_query(query)
+
     try:
         if values:
             cursor.execute(query, values)
@@ -127,7 +129,6 @@ def create_tables():
         The SQL query for creating tables must be defined in a file named
         'create_table_records.sql' and placed in the 'sql' directory.
     """
-    create_table_records_query = "create_table_records.sql"
-    query = load_query(create_table_records_query)
+    query = "create_tables.sql"
 
     execute_query(query)
