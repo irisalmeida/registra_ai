@@ -107,9 +107,12 @@ def init_pool():
             try:
                 connection_pool = pool.SimpleConnectionPool(**db_config)
                 break
-            except psycopg2.OperationalError:
+            except psycopg2.OperationalError as e:
                 attempts += 1
                 wait_time = attempts  # Increase the wait time with each attempt
+                print("\n"*2)
+                print(f"{str(e) = }")
+                print("\n"*2)
                 print(f"Attempt {attempts}/{max_attempts}: Database not ready, waiting {wait_time} seconds...")
                 time.sleep(wait_time)
 

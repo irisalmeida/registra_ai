@@ -7,20 +7,21 @@ from flask_login import UserMixin
 
 
 class User(UserMixin):
-    def __init__(self, id_: str, name: str, email: str, profile_pic: str):
+    def __init__(self, id: str, name: str, email: str, profile_pic: str):
         """
         Initialize a User object.
 
         Args:
-            id_ (str): The unique identifier for the user.
+            id (str): The unique identifier for the user.
             name (str): The name of the user.
             email (str): The email address of the user.
             profile_pic (str): The URL of the user's profile picture.
         """
-        self.id:str = id_
+        self.id:str = id
         self.name:str = name
         self.email:str = email
         self.profile_pic:str = profile_pic
+        self.records = []
 
     @staticmethod
     def get(user_id: str) -> User | None:
@@ -53,13 +54,13 @@ class User(UserMixin):
 
         user_data = results[0]
         user = User(
-            id_=user_data[0], name=user_data[1], email=user_data[2], profile_pic=user_data[3]
+            id=user_data[0], name=user_data[1], email=user_data[2],
+            profile_pic=user_data[3]
         )
         return user
 
-
     @staticmethod
-    def create(id_: str, name: str, email: str, profile_pic: str) -> None:
+    def create(id: str, name: str, email: str, profile_pic: str) -> User:
         """
         Create a new user in the database.
 
@@ -67,18 +68,19 @@ class User(UserMixin):
         details.
 
         Args:
-            id_ (str): The unique identifier for the user.
+            id (str): The unique identifier for the user.
             name (str): The name of the user.
             email (str): The email address of the user.
             profile_pic (str): The URL of the user's profile picture.
 
         Example:
-            >>> User.create("123", "John Doe", "john@example.com",
-                            "http://example.com/john.jpg")
+            >>> User.create("123", "John Doe", "john@example.com", "http://example.com/john.jpg")
+            <User object at 0x...>
         """
         query = "insert_user.sql"
-        values = (id_, name, email, profile_pic)
+        values = (id, name, email, profile_pic)
         execute_query(query, values)
+        return User(id, name, email, profile_pic)
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -90,8 +92,7 @@ class User(UserMixin):
             dict[str, Any]: A dictionary containing the user's details.
 
         Example:
-            >>> user = User("123", "John Doe", "john@example.com",
-                            "http://example.com/john.jpg")
+            >>> user = User("123", "John Doe", "john@example.com", "http://example.com/john.jpg")
             >>> user.to_dict()
             {
                 "id": "123",
@@ -107,106 +108,207 @@ class User(UserMixin):
             "profile_pic": self.profile_pic,
         }
 
-    def get_records(self) -> list[dict[str, str | float]]:
-        query = "get_user_records.sql"
-        values = (self.id,)
-        results = execute_query(query, values)
+    def gain(self, amount: float, description: str) -> Record:
+        """
+        Create a new gain record for the user.
 
-        if results is None:
-            return []
+        This method creates a new gain record in the database with the provided
+        amount and description, associated with the current user. The amount is
+        stored as a positive value.
 
-        records = []
-        for rec in results:
-            record = {
-                "id": rec[0],
-                "user_id": rec[1],
-                "amount": rec[2],
-                "description": rec[3],
-                "ts": rec[4],
-            }
-            records.append(record)
+        Args:
+            amount (float): The amount of the gain. This value will be stored
+                as a positive number.
+            description (str): A description of the gain.
 
+        Returns:
+            Record | None: A `Record` object if the gain record is successfully
+            created, otherwise `None`.
+
+        Example:
+            >>> user = User("123", "John Doe", "john@example.com", "http://example.com/john.jpg")
+            >>> user.gain(100.0, "Salary payment")
+            <Record object at 0x...>
+
+            (In case of some error)
+            >>> user.gain(100.0, "Salary payment")
+            None
+        """
+        record = Record.create(self.id, amount, description)
+        return record
+
+    def expense(self, amount: float, description: str) -> Record:
+        """
+        Create a new expense record for the user.
+
+        This method creates a new expense record in the database with the
+        provided amount and description, associated with the current user. The
+        amount is stored as a negative value.
+
+        Args:
+            amount (float): The amount of the expense. This value will be
+                stored as a negative number.
+            description (str): A description of the expense.
+
+        Returns:
+            Record | None: A `Record` object if the expense record is
+                successfully created, otherwise `None`.
+
+        Example:
+            >>> user = User("123", "John Doe", "john@example.com", "http://example.com/john.jpg")
+            >>> user.expense(50.0, "Grocery shopping")
+            <Record object at 0x...>
+        """
+        negative_amount = amount * -1
+        record = Record.create(self.id, negative_amount, description)
+        return record
+
+    def get_records(self) -> list[Record]:
+        """
+        Retrieve all records for the user.
+
+        This method retrieves all records from the database associated with the
+        current user.
+
+        Returns:
+            list[Record]: A list of `Record` objects associated with the user.
+
+        Example:
+            >>> user = User("123", "John Doe", "john@example.com", "http://example.com/john.jpg")
+            >>> user.get_records()
+            [<Record object at 0x...>, <Record object at 0x...>, ...]
+
+            (If no records are found)
+            >>> user.get_records()
+            []
+        """
+        records = Record.get_all(self.id)
         return records
 
-
-class Record():
+class Record:
     """
     Represents a financial record.
 
-    This class models a financial record, such as a transaction or event,
-    with attributes including amount, description, and timestamp.
+    This class models a financial record, of gain or expense of money, with
+    attributes including amount, description, and the creation time.
 
     Attributes:
+        id (int): The ID of the record in the database.
+        user_id (str): The ID of the user that registered the record.
         amount (float): The amount associated with the record.
         description (str): A description of the record.
-        ts (Optional[datetime]): The timestamp of the record (default: current time).
+        created_at (datetime): The datetime timestamp of the record.
+
+    Static Methods:
+        create: Create a new record in the database.
+        get_all: Retrieve all records from the database.
 
     Methods:
-        to_dict(): Convert the record object to a dictionary.
-        save(): Save the record to the database.
-        get_all(): Retrieve all records from the database.
+        to_dict: Convert the record object to a dictionary.
     """
 
-    def __init__(self, user_id: str, amount: float, description: str, ts: datetime | None = None) -> None:
+    def __init__(self, id: int, user_id: str, amount: float, description: str, created_at: datetime) -> None:
         """
         Initialize a Record object.
 
         Args:
+            id (int): The ID of the record in the database.
+            user_id (str): The ID of the user that registered the record.
             amount (float): The amount associated with the record.
             description (str): A description of the record.
-            ts (Optional[datetime]): The timestamp of the record (default: current time).
+            created_at (datetime): The datetime timestamp of the record.
         """
+        self.id = id
         self.user_id = user_id
         self.amount = amount
         self.description = description
-        self.ts = datetime.now() if ts is None else ts
+        self.created_at = created_at
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert the record object to a dictionary.
 
+        This method converts the record object to a dictionary representation.
+
         Returns:
-            dict: A dictionary representation of the record.
+            dict[str, Any]: A dictionary containing the record's details, with
+            keys corresponding to the record's attributes.
+
+        Example:
+            >>> record = Record(1, "123", 50.0, "Found in my old pants", datetime.now())
+            >>> record.to_dict()
+            {
+                'id': 1,
+                'user_id': '123',
+                'amount': 50.0,
+                'description': 'Found in my old pants',
+                'created_at': datetime.datetime(...)
+            }
         """
         rec = vars(self).copy()
         return rec
 
-    def save(self) -> bool:
+    @staticmethod
+    def create(user_id: str, amount: float, description: str) -> Record:
         """
-        Save the record to the database.
+        Create a new record in the database.
+
+        This method inserts a new record into the database with the provided
+        details and returns an equivalent Record object.
+
+        Args:
+            user_id (str): The ID of the user that registered the record.
+            amount (float): The amount associated with the record.
+            description (str): A description of the record.
 
         Returns:
-            bool: True if the record was successfully saved, False otherwise.
+            Record | None: The `Record` object created.
+
+        Example:
+            >>> Record.create("123", 50.0, "Found in my old pants")
+            <Record object at 0x...>
         """
-        query = "insert_table_records.sql"
+        query = "insert_record.sql"
+        created_at = datetime.now()
+        values = (user_id, amount, description, created_at)
 
-        values = (self.amount, self.description, self.ts)
-
-        try:
-            execute_query(query, values)
-            return True
-        except Exception as e:
-            print(e)
-            return False
+        query_result:list[tuple[int,]] = execute_query(query, values) # type: ignore
+        record_id = query_result[0][0]
+        return Record(record_id, user_id, amount, description, created_at)
 
     @staticmethod
-    def get_all() -> list[dict[str,str|float]]:
+    def get_all(user_id: str) -> list[Record]:
         """
-        Retrieve all records from the database.
+        Retrieve all records of a user from the database.
+
+        This method retrieves all records from the database associated with the
+        given user ID and returns them as a list of `Record` objects.
+
+        Args:
+            user_id (str): The ID of the user whose records are to be retrieved.
 
         Returns:
-            list[dict[str, str | float]]: A list of dictionaries, each representing a record with its details.
+            list[Record]: A list of `Record` objects associated with the user.
+
+        Example:
+            >>> Record.get_all("123")
+            [<Record object at 0x...>, <Record object at 0x...>, ...]
+
+            (If no records are found)
+            >>> Record.get_all("123")
+            []
         """
-        query = "select_all_records.sql"
-        result = execute_query(query)
+        query = "get_records.sql"
+        values = (user_id,)
+        result = execute_query(query, values)
 
         if result is None:
             return []
 
         all_records = []
         for row in result:
-            _, amount, description, ts = row
-            record = Record(amount, description, ts)
-            all_records.append(record.to_dict())
+            id, _, amount, description, created_at = row
+            record = Record(id, user_id, amount, description, created_at)
+            all_records.append(record)
 
         return all_records

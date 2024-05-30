@@ -11,7 +11,6 @@ from flask import (
     abort,
     Response,
     redirect,
-    session,
 )
 from flask_login import (
     LoginManager,
@@ -274,13 +273,16 @@ def callback():
             }
         ), 400
 
-
-    user = controller.get_or_create_user(unique_id, users_name, users_email, picture)
+    try:
+        user = controller.get_or_create_user(unique_id, users_name, users_email, picture)
+    except Exception as e:
+        return jsonify(
+            {
+                "error": str(e)
+            }
+        ), 500
 
     login_user(user)
-
-    session["user_id"] = unique_id
-
     response = make_response(redirect(FRONTEND_URL))
     return response
 
@@ -364,9 +366,9 @@ def get_user():
             "reason": "User not found"
         }
     """
-    user_id = current_user.id
-    _assert(bool(current_user.is_authenticated and
-            str(current_user.id == user_id)),
+    user_id = current_user.id # type: ignore
+    _assert(bool(current_user.is_authenticated and # type: ignore
+            str(current_user.id == user_id)), # type: ignore
             401, "Unathorized access")
 
     user = User.get(user_id)
@@ -376,6 +378,7 @@ def get_user():
 
 
 @app.route("/balance")
+@login_required
 def get_balance() -> tuple[Response,int]:
     """
     Retrieve the current balance.
@@ -401,15 +404,30 @@ def get_balance() -> tuple[Response,int]:
         }
 
     """
-    balance = controller.get_balance()
+    status_code = 200
+    user_id = current_user.id # type: ignore
 
-    res = {
-        "balance": balance,
-    }
-    return jsonify(res), 200
+    try:
+        balance = controller.get_balance(user_id)
+
+        res = {
+            "balance": balance
+        }
+    except Exception as e:
+        res = {
+            "status": "error",
+            "reason": f"Erro during gain registration for user {user_id}",
+            "adicional_info": {
+                "exception": str(e),
+                }
+        }
+        status_code = 500
+
+    return jsonify(res), status_code
 
 
 @app.route("/gain", methods=["POST"])
+@login_required
 def post_gain() -> tuple[Response, int]:
     """
     Process and record a gain.
@@ -515,17 +533,32 @@ def post_gain() -> tuple[Response, int]:
     }
     _assert(bool(description), 400, "Invalid field", aditional_info)
 
-    rec = controller.register_gain(amount, description)
-    balance = controller.get_balance()
+    status_code = 200
+    user_id = current_user.id # type: ignore
 
-    res = {
-        "record": rec,
-        "balance": balance
-    }
-    return jsonify(res), 200
+    try:
+        rec = controller.register_gain(user_id, amount, description)
+        balance = controller.get_balance(user_id)
+
+        res = {
+            "record": rec.to_dict(),
+            "balance": balance
+        }
+    except Exception as e:
+        res = {
+            "status": "error",
+            "reason": f"Erro during gain registration for user {user_id}",
+            "adicional_info": {
+                "exception": str(e),
+                }
+        }
+        status_code = 500
+
+    return jsonify(res), status_code
 
 
 @app.route("/expense", methods=["POST"])
+@login_required
 def post_expense():
     """
     Process and record an expense.
@@ -631,14 +664,27 @@ def post_expense():
     }
     _assert(bool(description), 400, "Invalid field", aditional_info)
 
-    rec = controller.register_expense(amount, description)
-    balance = controller.get_balance()
+    status_code = 200
+    user_id = current_user.id # type: ignore
+    try:
+        rec = controller.register_expense(user_id, amount, description)
+        balance = controller.get_balance(user_id)
 
-    res = {
-        "record": rec,
-        "balance": balance
-    }
-    return jsonify(res), 200
+        res = {
+            "record": rec.to_dict(),
+            "balance": balance
+        }
+    except Exception as e:
+        res = {
+            "status": "error",
+            "reason": f"Erro during expense registration for user {user_id}",
+            "adicional_info": {
+                "exception": str(e),
+                }
+        }
+        status_code = 500
+
+    return jsonify(res), status_code
 
 
 @app.route("/history", methods=["GET"])
@@ -682,8 +728,30 @@ def get_history() -> tuple[Response,int]:
         ]
 
     """
-    all_records = controller.get_all_records()
-    return jsonify(all_records), 200
+    status_code = 200
+    user_id = current_user.id # type: ignore
+
+    try:
+        user = controller.get_user(user_id)
+        records = user.get_records()
+        history = [rec.to_dict() for rec in records]
+        balance = sum([rec.amount for rec in records])
+
+        res = {
+            "history": history,
+            "balance": balance,
+        }
+    except Exception as e:
+        res = {
+            "status": "error",
+            "reason": f"Erro during get history for user {user_id}",
+            "adicional_info": {
+                "exception": str(e),
+                }
+        }
+        status_code = 500
+
+    return jsonify(res), status_code
 
 
 @app.before_request

@@ -1,1 +1,1 @@
-INSERT INTO records (user_id, amount, description, ts) VALUES (%s, %s, %s, %s);
+INSERT INTO records (user_id, amount, description, created_at) VALUES (%s, %s, %s, %s) RETURNING id;

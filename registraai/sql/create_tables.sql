@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS records (
   id SERIAL PRIMARY KEY,
-  user_id TEXT FOREIGN KEY REFERENCES users(id),
+  user_id TEXT REFERENCES users(id),
   amount float,
   description varchar,
   created_at timestamp
