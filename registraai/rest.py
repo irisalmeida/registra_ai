@@ -283,7 +283,9 @@ def callback():
         ), 500
 
     login_user(user)
-    response = make_response(redirect(FRONTEND_URL))
+    callback_url = f"{FRONTEND_URL}/#login-callback"
+    response = make_response(redirect(callback_url))
+    response.set_cookie("logged", "true")
     return response
 
 
@@ -304,7 +306,9 @@ def logout():
         {"status": "ok", "message": "Logout success"}
     """
     logout_user()
-    return jsonify({"status": "ok", "message": "Logout success"}), 200
+    response = make_response({"status": "ok", "message": "Logout success"}, 200)
+    response.set_cookie("logged", "false")
+    return response
 
 
 @app.route("/user_data", methods=["GET"])
