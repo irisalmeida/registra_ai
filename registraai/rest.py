@@ -519,6 +519,12 @@ def post_gain() -> tuple[Response, int]:
 
     aditional_info = {
         "invalid_field": "amount",
+        "reason": f"Can't be 0. Got: {amount}"
+    }
+    _assert(amount != 0, 400, "Invalid field", aditional_info)
+
+    aditional_info = {
+        "invalid_field": "amount",
         "reason": f"Must be a positive number. Got: {amount}"
     }
     _assert(amount >= 0, 400, "Invalid field", aditional_info)
@@ -530,12 +536,6 @@ def post_gain() -> tuple[Response, int]:
         "reason": f"Must be a string. Got: {type(description).__name__}"
     }
     _assert(isinstance(description, str), 400, "Invalid field", aditional_info)
-
-    aditional_info = {
-        "invalid_field": "description",
-        "reason": f"Can't be empty"
-    }
-    _assert(bool(description), 400, "Invalid field", aditional_info)
 
     status_code = 200
     user_id = current_user.id # type: ignore
@@ -650,6 +650,12 @@ def post_expense():
 
     aditional_info = {
         "invalid_field": "amount",
+        "reason": f"Can't be 0. Got: {amount}"
+    }
+    _assert(amount != 0, 400, "Invalid field", aditional_info)
+
+    aditional_info = {
+        "invalid_field": "amount",
         "reason": f"Must be a positive number. Got: {amount}"
     }
     _assert(amount >= 0, 400, "Invalid field", aditional_info)
@@ -661,12 +667,6 @@ def post_expense():
         "reason": f"Must be a string. Got: {type(description).__name__}"
     }
     _assert(isinstance(description, str), 400, "Invalid field", aditional_info)
-
-    aditional_info = {
-        "invalid_field": "description",
-        "reason": f"Can't be empty"
-    }
-    _assert(bool(description), 400, "Invalid field", aditional_info)
 
     status_code = 200
     user_id = current_user.id # type: ignore
