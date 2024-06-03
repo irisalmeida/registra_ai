@@ -68,7 +68,7 @@ This function executes the given SQL query with optional parameter values.
 
 ---
 
-<a href="../registraai/db.py#L74"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="../registraai/db.py#L76"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `init_db`
 
@@ -89,7 +89,7 @@ This function initializes the database by creating the connection pool and creat
 
 ---
 
-<a href="../registraai/db.py#L89"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="../registraai/db.py#L91"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `init_pool`
 
@@ -110,7 +110,7 @@ This function initializes the connection pool for database connections.
 
 ---
 
-<a href="../registraai/db.py#L120"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="../registraai/db.py#L125"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `create_tables`
 
