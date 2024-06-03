@@ -16,6 +16,10 @@ WORKDIR /app
 # Copy the requirements.txt file into the container
 COPY requirements.txt /app/requirements.txt
 
+# Copy certificates to run server with https
+COPY cert.pem /app/cert.pem
+COPY key.pem /app/key.pem
+
 RUN set -ex && python3 -m venv $VIRTUAL_ENV
 
 # Install the Python dependencies specified in requirements.txt
