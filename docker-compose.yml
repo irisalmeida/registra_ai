@@ -19,4 +19,4 @@ services:
     ports:
       - "8001:8001"
     volumes:
-      - ./registraai:/app/registraai
+      - ./app:/app/app
