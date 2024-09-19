@@ -206,7 +206,7 @@ def get_google_provider_cfg() -> dict[str, Any]:
     return requests.get(GOOGLE_DISCOVERY_URL).json()
 
 
-@app.route("/registra_ai/login")
+@app.route("/login")
 def login():
     """
     Initiate the Google OAuth2 login process.
@@ -230,7 +230,7 @@ def login():
     return redirect(request_uri)
 
 
-@app.route("/registra_ai/login/callback")
+@app.route("/login/callback")
 def callback():
     """
     Callback endpoint for handling the OAuth2 authorization code and logging in
@@ -295,7 +295,7 @@ def callback():
     return redirect(url_for("index"))
 
 
-@app.route("/registra_ai/logout")
+@app.route("/logout")
 @login_required
 def logout():
     """
@@ -315,12 +315,12 @@ def logout():
     return redirect(url_for("index"))
 
 
-@app.route("/registra_ai")
+@app.route("/")
 def index():
     return send_from_directory(app.static_folder, "index.html") # type: ignore
 
 
-@app.route("/registra_ai/get_content")
+@app.route("/get_content")
 def get_content():
     if current_user.is_authenticated:
         res = make_response(render_template("authenticated.html", user=current_user))
@@ -331,7 +331,7 @@ def get_content():
     return res
 
 
-@app.route("/registra_ai/user_data", methods=["GET"])
+@app.route("/user_data", methods=["GET"])
 @login_required
 def get_user():
     """
@@ -401,7 +401,7 @@ def get_user():
     return jsonify(user.to_dict()), 200 # type: ignore
 
 
-@app.route("/registra_ai/balance")
+@app.route("/balance")
 @login_required
 def get_balance() -> tuple[Response,int]:
     """
@@ -450,7 +450,7 @@ def get_balance() -> tuple[Response,int]:
     return jsonify(res), status_code
 
 
-@app.route("/registra_ai/gain", methods=["POST"])
+@app.route("/gain", methods=["POST"])
 @login_required
 def post_gain() -> tuple[Response, int]:
     """
@@ -581,7 +581,7 @@ def post_gain() -> tuple[Response, int]:
     return jsonify(res), status_code
 
 
-@app.route("/registra_ai/expense", methods=["POST"])
+@app.route("/expense", methods=["POST"])
 @login_required
 def post_expense():
     """
@@ -711,7 +711,7 @@ def post_expense():
     return jsonify(res), status_code
 
 
-@app.route("/registra_ai/history", methods=["GET"])
+@app.route("/history", methods=["GET"])
 def get_history() -> tuple[Response,int]:
     """
     Retrieve the history of all records.
