@@ -3,7 +3,7 @@ import { getUserData, register, getHistory } from "./api.js";
 let $main = document.getElementById("main");
 
 export async function loadHomeView() {
-  let response = await fetch("/get_content");
+  let response = await fetch("/registra_ai/get_content");
   let content = await response.text();
   let isAuthenticated = response.headers.get("X-Is-Authenticated") === "True";
 

@@ -10,7 +10,7 @@ async function request(method, route, data = null) {
   }
 
   try {
-    const response = await fetch(route, options);
+    const response = await fetch(`/registra_ai/${route}`, options);
     let body = await response.json()
     if (!response.ok) {
       console.error(body);
