@@ -17,6 +17,7 @@ services:
     env_file:
       - ./.env
     ports:
-      - "8001:8001"
+      - "5000:5000"
     volumes:
       - ./app:/app/app
+      - ./static:/app/static

@@ -23,6 +23,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the entire application directory into the container
 COPY ./app /app/app
+COPY ./static /app/static
 
 # Set the PYTHONPATH to include the /app directory
 ENV PYTHONPATH="${PYTHONPATH}:/app/app"

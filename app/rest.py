@@ -11,6 +11,9 @@ from flask import (
     abort,
     Response,
     redirect,
+    send_from_directory,
+    url_for,
+    render_template
 )
 from flask_login import (
     LoginManager,
@@ -20,7 +23,6 @@ from flask_login import (
     logout_user,
     UserMixin,
 )
-from flask_cors import CORS
 from oauthlib.oauth2 import WebApplicationClient
 
 import requests
@@ -28,17 +30,23 @@ import controller
 import db
 from models import User
 
-FRONTEND_URL = os.environ.get("FRONTEND_URL", "")
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", None)
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", None)
 GOOGLE_DISCOVERY_URL = (
     "https://accounts.google.com/.well-known/openid-configuration"
 )
 
-app = Flask(__name__)
-app.secret_key = os.environ.get("APP_SECRET_KEY")
+app_dir = os.path.dirname(os.path.abspath(__file__))
 
-CORS(app, resources={r"/*": {"origins": FRONTEND_URL}}, supports_credentials=True)
+static_folder = os.path.abspath(os.path.join(app_dir, "../static"))
+template_folder = os.path.abspath(os.path.join(app_dir, "../static/templates"))
+
+app = Flask(
+  __name__,
+  static_folder=static_folder,
+  template_folder=template_folder
+)
+app.secret_key = os.environ.get("APP_SECRET_KEY")
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -283,13 +291,11 @@ def callback():
         ), 500
 
     login_user(user)
-    callback_url = f"{FRONTEND_URL}/#login-callback"
-    response = make_response(redirect(callback_url))
-    response.set_cookie("logged", "true")
-    return response
+
+    return redirect(url_for("index"))
 
 
-@app.route("/logout", methods=["POST"])
+@app.route("/logout")
 @login_required
 def logout():
     """
@@ -306,9 +312,23 @@ def logout():
         {"status": "ok", "message": "Logout success"}
     """
     logout_user()
-    response = make_response({"status": "ok", "message": "Logout success"}, 200)
-    response.set_cookie("logged", "false")
-    return response
+    return redirect(url_for("index"))
+
+
+@app.route("/")
+def index():
+    return send_from_directory(app.static_folder, "index.html") # type: ignore
+
+
+@app.route("/get_content")
+def get_content():
+    if current_user.is_authenticated:
+        res = make_response(render_template("authenticated.html", user=current_user))
+    else:
+        res = make_response(render_template("login.html"))
+
+    res.headers["X-Is-Authenticated"] = current_user.is_authenticated
+    return res
 
 
 @app.route("/user_data", methods=["GET"])
