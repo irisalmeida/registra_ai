@@ -30,6 +30,9 @@ import controller
 import db
 from models import User
 
+
+# TODO: load BASE_URL based on the env
+BASE_URL = ""
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", None)
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", None)
 GOOGLE_DISCOVERY_URL = (
@@ -317,7 +320,7 @@ def logout():
 
 @app.route("/")
 def index():
-    return send_from_directory(app.static_folder, "index.html") # type: ignore
+    return render_template("index.html", base_url=BASE_URL) # type: ignore
 
 
 @app.route("/get_content")
@@ -325,7 +328,7 @@ def get_content():
     if current_user.is_authenticated:
         res = make_response(render_template("authenticated.html", user=current_user))
     else:
-        res = make_response(render_template("login.html"))
+        res = make_response(render_template("login.html", base_url=BASE_URL))
 
     res.headers["X-Is-Authenticated"] = current_user.is_authenticated
     return res

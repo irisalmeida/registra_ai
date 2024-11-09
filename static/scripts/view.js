@@ -1,9 +1,11 @@
 import { getUserData, register, getHistory } from "./api.js";
 
+// TODO: change base_url depending on the env it is running
+const BASE_URL = ""
 let $main = document.getElementById("main");
 
 export async function loadHomeView() {
-  let response = await fetch("/registra_ai/get_content");
+  let response = await fetch(`${BASE_URL}/get_content`);
   let content = await response.text();
   let isAuthenticated = response.headers.get("X-Is-Authenticated") === "True";
 

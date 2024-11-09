@@ -1,3 +1,5 @@
+const BASE_URL = ""
+
 async function request(method, route, data = null) {
   let options = {
     method: method,
@@ -10,7 +12,7 @@ async function request(method, route, data = null) {
   }
 
   try {
-    const response = await fetch(`/registra_ai/${route}`, options);
+    const response = await fetch(`${BASE_URL}${route}`, options);
     let body = await response.json()
     if (!response.ok) {
       console.error(body);
